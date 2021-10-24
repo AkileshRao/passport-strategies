@@ -1,7 +1,10 @@
+const { hashSync } = require('bcrypt');
 const express = require('express');
 const app = express();
+const UserModel = require('./config/database');
 
 app.set('view engine', 'ejs')
+app.use(express.urlencoded({ extended: true }))
 
 app.get('/login', (req, res) => {
     res.render('login')
@@ -16,7 +19,14 @@ app.post('/login', (req, res) => {
 })
 
 app.post('/register', (req, res) => {
-    res.send("Register post")
+    let user = new UserModel({
+        username: req.body.username,
+        password: hashSync(req.body.password, 10)
+    })
+
+    user.save().then(user => console.log(user));
+
+    res.send({ success: true })
 })
 
 app.get('/logout', (req, res) => {
