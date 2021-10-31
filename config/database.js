@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://localhost:27017/passport');
+mongoose.connect('mongodb://localhost:27017/passport-google');
 
 const userSchema = mongoose.Schema({
-    username: String,
-    password: String
+    name: String,
+    googleId: String,
 })
 
 const UserModel = mongoose.model('User', userSchema);

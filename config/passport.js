@@ -1,23 +1,29 @@
 const { compareSync } = require('bcrypt');
 const passport = require('passport')
-const LocalStrategy = require('passport-local').Strategy;
 const UserModel = require('./database')
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
-passport.use(new LocalStrategy(
-    function (username, password, done) {
-        UserModel.findOne({ username: username }, function (err, user) {
-            if (err) { return done(err); } //When some error occurs
+passport.use(new GoogleStrategy({
+    clientID: "644910442364-1cgg123olo61b21kmur092eptbk5se6g.apps.googleusercontent.com",
+    clientSecret: "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",
+    callbackURL: "http://localhost:5000/auth/callback"
+},
+    function (accessToken, refreshToken, profile, cb) {
+        console.log(accessToken, profile);
+        UserModel.findOne({ googleId: profile.id }, (err, user) => {
+            if (err) return cb(err, null);
+            if (!user) {
+                let newUser = new UserModel({
+                    googleId: profile.id,
+                    name: profile.displayName
+                })
 
-            if (!user) {  //When username is invalid
-                return done(null, false, { message: 'Incorrect username.' });
+                newUser.save();
+                return cb(null, newUser);
+            } else {
+                return cb(null, user)
             }
-
-            if (!compareSync(password, user.password)) { //When password is invalid 
-                return done(null, false, { message: 'Incorrect password.' });
-            }
-
-            return done(null, user); //When user is valid
-        });
+        })
     }
 ));
 

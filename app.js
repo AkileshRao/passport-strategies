@@ -13,7 +13,7 @@ app.use(session({
     secret: 'keyboard cat',
     resave: false,
     saveUninitialized: true,
-    store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/passport', collectionName: "sessions" }),
+    store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/passport-google', collectionName: "sessions" }),
     cookie: {
         maxAge: 1000 * 60 * 60 * 24
     }
@@ -28,22 +28,12 @@ app.get('/login', (req, res) => {
     res.render('login')
 })
 
-app.get('/register', (req, res) => {
-    res.render('register')
-})
+app.get('/auth/google',
+    passport.authenticate('google', { scope: ['profile'] }));
 
-app.post('/login', passport.authenticate('local', { successRedirect: 'protected' }))
+app.get('/auth/callback',
+    passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/protected' }));
 
-app.post('/register', (req, res) => {
-    let user = new UserModel({
-        username: req.body.username,
-        password: hashSync(req.body.password, 10)
-    })
-
-    user.save().then(user => console.log(user));
-
-    res.send({ success: true })
-})
 
 app.get('/logout', (req, res) => {
     req.logout();
@@ -52,7 +42,9 @@ app.get('/logout', (req, res) => {
 
 app.get('/protected', (req, res) => {
     if (req.isAuthenticated()) {
-        res.send("Protected")
+        res.render("protected", {
+            name: req.user.name
+        })
     } else {
         res.status(401).send({ msg: "Unauthorized" })
     }
